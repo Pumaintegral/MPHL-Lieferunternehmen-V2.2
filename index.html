@@ -324,7 +324,7 @@
         const productsRef = collection(db, "products");
 
         // HIER IST DIE SICHERHEIT: Im Code steht nur der SHA-256 Hash. 
-        // Das echte Passwort ("MPHL123!") kann hier absolut niemand ablesen!
+        // Das echte Passwort ("DasistnichtdasPasswort!") kann hier absolut niemand ablesen!
         const TARGET_HASH = "80fef5e9ebfeecfc8da0b86a01ddf8b9e6e587ad0f845d448bfbe01c3df630ef";
 
         async function hashPassword(str) {
