@@ -66,6 +66,22 @@
     <!-- Toast Container -->
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
+    <!-- OWNER LOGIN MODAL (Passwort wird als Punkte angezeigt) -->
+    <div id="loginModal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <h3 class="text-xl font-bold text-amazon-yellow font-pixel">🔐 OWNER ANMELDUNG</h3>
+            <p class="text-xs text-gray-400">Bitte gib das Owner-Passwort ein (wird aus Sicherheitsgründen verdeckt).</p>
+            <div>
+                <!-- type="password" sorgt dafür, dass man nur Punkte sieht! -->
+                <input type="password" id="modalPasswordInput" placeholder="Passwort eingeben..." class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-sm text-white focus:outline-none focus:border-amazon-yellow">
+            </div>
+            <div class="flex gap-2 justify-end">
+                <button onclick="closeLoginModal()" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded text-xs font-bold transition">Abbrechen</button>
+                <button onclick="submitOwnerLogin()" class="bg-amazon-yellow hover:bg-amazon-button_hover text-black px-4 py-2 rounded text-xs font-bold transition">Anmelden</button>
+            </div>
+        </div>
+    </div>
+
     <!-- TOP HEADER / NAV -->
     <header class="bg-amazon-blue text-white sticky top-0 z-40 shadow-lg">
         <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-2 gap-4">
@@ -323,8 +339,7 @@
         const ordersRef = collection(db, "orders");
         const productsRef = collection(db, "products");
 
-        // HIER IST DIE SICHERHEIT: Im Code steht nur der SHA-256 Hash. 
-        // Das echte Passwort ("DasistnichtdasPasswort!") kann hier absolut niemand ablesen!
+        // Dein sicherer SHA-256 Hash für "MPHListsuper123!"
         const TARGET_HASH = "94b6cf0648aab4bd896a39c7c798e672d2b8810522a5efd9b87fe03eed49f552";
 
         async function hashPassword(str) {
@@ -508,24 +523,31 @@
             }
         };
 
-        // Das klassische Prompt-Fenster, aber abgesichert durch den SHA-256 Hash
-        window.toggleOwnerLogin = async function() {
+        // Öffen des schönen Login-Modals statt des Browser-Prompts
+        window.toggleOwnerLogin = function() {
             if(isOwner) {
                 showPage('owner');
                 return;
             }
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('modalPasswordInput').value = '';
+            document.getElementById('modalPasswordInput').focus();
+        };
 
-            const inputPass = prompt("Bitte das Owner-Passwort eingeben:");
-            if (inputPass === null) return;
+        window.closeLoginModal = function() {
+            document.getElementById('loginModal').classList.add('hidden');
+        };
 
-            // Hier wird das eingetippte Passwort blitzschnell gehasht und mit dem Ziel-Hash verglichen
-            const inputHash = await hashPassword(inputPass.trim());
+        window.submitOwnerLogin = async function() {
+            const val = document.getElementById('modalPasswordInput').value.trim();
+            const inputHash = await hashPassword(val);
 
             if (inputHash === TARGET_HASH) {
                 isOwner = true;
                 document.getElementById('userStatusText').innerText = "Owner Dashboard";
                 document.getElementById('userStatusText').classList.add('text-amazon-yellow');
                 showToast("Erfolgreich als Owner angemeldet!", "success");
+                closeLoginModal();
                 showPage('owner');
                 renderOwnerProductsTable();
                 listenToOrders();
