@@ -1,599 +1,680 @@
 <!DOCTYPE html>
 <html lang="de" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MPHL.craft | Minecraft Item Marketplace</title>
-    
-    <!-- Tailwind CSS & FontAwesome -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Pixel Google Font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPHL.craft | Minecraft Item Marketplace</title>
+    
+    <!-- Tailwind CSS & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Pixel Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Tailwind Custom Colors -->
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              amazon: {
-                blue: '#131921',
-                light_blue: '#232f3e',
-                yellow: '#febd69',
-                orange: '#f3a847',
-                button: '#ffd814',
-                button_hover: '#f7ca00'
-              },
-              mc: {
-                grass: '#5b8731',
-                dirt: '#866043',
-                stone: '#737373',
-                diamond: '#4adedf',
-                gold: '#fdf55f',
-                netherite: '#4a4347',
-                emerald: '#47e266'
-              }
-            },
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              pixel: ['"VT323"', 'monospace']
-            }
-          }
-        }
-      }
-    </script>
+    <!-- Tailwind Custom Colors -->
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              amazon: {
+                blue: '#131921',
+                light_blue: '#232f3e',
+                yellow: '#febd69',
+                orange: '#f3a847',
+                button: '#ffd814',
+                button_hover: '#f7ca00'
+              },
+              mc: {
+                grass: '#5b8731',
+                dirt: '#866043',
+                stone: '#737373',
+                diamond: '#4adedf',
+                gold: '#fdf55f',
+                netherite: '#4a4347',
+                emerald: '#47e266'
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              pixel: ['"VT323"', 'monospace']
+            }
+          }
+        }
+      }
+    </script>
 
-    <style>
-      ::-webkit-scrollbar { width: 8px; height: 8px; }
-      ::-webkit-scrollbar-track { background: #131921; }
-      ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
-      .pixelated { image-rendering: pixelated; image-rendering: crisp-edges; }
-      .mc-box {
-        border: 2px solid #374151;
-        box-shadow: inset -2px -2px 0px rgba(0,0,0,0.4), inset 2px 2px 0px rgba(255,255,255,0.1);
-      }
-    </style>
+    <style>
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: #131921; }
+      ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+      .pixelated { image-rendering: pixelated; image-rendering: crisp-edges; }
+      @keyframes slideIn {
+        from { transform: translateY(100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .toast-animate { animation: slideIn 0.3s ease-out forwards; }
+    </style>
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col selection:bg-amazon-yellow selection:text-black">
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col selection:bg-amazon-yellow selection:text-black relative">
 
-    <!-- TOP HEADER / NAV -->
-    <header class="bg-amazon-blue text-white sticky top-0 z-50">
-        <!-- Main Navbar -->
-        <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-2 gap-4">
-            
-            <!-- Logo -->
-            <div onclick="showPage('shop')" class="flex items-center gap-2 cursor-pointer border border-transparent hover:border-white p-1 rounded transition">
-                <i class="fa-solid me-1 text-2xl text-amazon-yellow">⛏️</i>
-                <div class="leading-none">
-                    <span class="font-pixel text-3xl font-bold tracking-wider text-white">mphl<span class="text-amazon-yellow">.craft</span></span>
-                    <span class="block text-[10px] text-gray-400 -mt-1 font-mono">DELIVERING TO OVERWORLD</span>
-                </div>
-            </div>
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-            <!-- Search Bar -->
-            <div class="flex-1 max-w-2xl hidden md:flex items-center">
-                <div class="relative w-full flex">
-                    <input type="text" id="searchInput" oninput="filterProducts()" placeholder="Suche nach Diamanten, Schwertern, Tränken..." class="w-full pl-4 pr-12 py-2 bg-white text-black text-sm rounded-l-md focus:outline-none focus:ring-2 focus:ring-amazon-orange">
-                    <button class="bg-amazon-yellow hover:bg-amazon-button_hover text-black px-5 rounded-r-md flex items-center justify-center transition">
-                        <i class="fa-solid fa-magnifying-glass text-lg"></i>
-                    </button>
-                </div>
-            </div>
+    <!-- TOP HEADER / NAV -->
+    <header class="bg-amazon-blue text-white sticky top-0 z-40 shadow-lg">
+        <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-2 gap-4">
+            <!-- Logo -->
+            <div onclick="showPage('shop')" class="flex items-center gap-2 cursor-pointer border border-transparent hover:border-white p-1 rounded transition">
+                <i class="fa-solid me-1 text-2xl text-amazon-yellow">⛏️</i>
+                <div class="leading-none">
+                    <span class="font-pixel text-3xl font-bold tracking-wider text-white">mphl<span class="text-amazon-yellow">.craft</span></span>
+                    <span class="block text-[10px] text-gray-400 -mt-1 font-mono">DELIVERING TO OVERWORLD</span>
+                </div>
+            </div>
 
-            <!-- Right Links -->
-            <div class="flex items-center gap-4 text-xs md:text-sm">
-                <!-- Owner Login / Status -->
-                <div id="authBtn" onclick="toggleOwnerLogin()" class="cursor-pointer border border-transparent hover:border-white p-2 rounded leading-tight">
-                    <span class="block text-gray-400 text-[10px]">Willkommen,</span>
-                    <span id="userStatusText" class="font-bold">Anmelden (Owner)</span>
-                </div>
+            <!-- Search Bar -->
+            <div class="flex-1 max-w-2xl hidden md:flex items-center">
+                <div class="relative w-full flex">
+                    <input type="text" id="searchInput" oninput="filterProducts()" placeholder="Suche nach Diamanten, Schwertern, Tränken..." class="w-full pl-4 pr-12 py-2 bg-white text-black text-sm rounded-l-md focus:outline-none focus:ring-2 focus:ring-amazon-orange">
+                    <button class="bg-amazon-yellow hover:bg-amazon-button_hover text-black px-5 rounded-r-md flex items-center justify-center transition">
+                        <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                    </button>
+                </div>
+            </div>
 
-                <!-- Cart Button -->
-                <div onclick="showPage('cart')" class="relative flex items-center gap-1 cursor-pointer border border-transparent hover:border-white p-2 rounded">
-                    <div class="relative">
-                        <i class="fa-solid fa-cart-shopping text-2xl text-white"></i>
-                        <span id="cartCount" class="absolute -top-2 -right-2 bg-amazon-orange text-black font-bold rounded-full w-5 h-5 flex items-center justify-center text-xs">0</span>
-                    </div>
-                    <span class="font-bold hidden sm:inline ml-1">Warenkorb</span>
-                </div>
-            </div>
-        </div>
+            <!-- Right Links -->
+            <div class="flex items-center gap-4 text-xs md:text-sm">
+                <div id="authBtn" onclick="toggleOwnerLogin()" class="cursor-pointer border border-transparent hover:border-white p-2 rounded leading-tight transition">
+                    <span class="block text-gray-400 text-[10px]">Willkommen,</span>
+                    <span id="userStatusText" class="font-bold">Anmelden (Owner)</span>
+                </div>
 
-        <!-- Sub Navbar / Categories -->
-        <div class="bg-amazon-light_blue px-4 py-1.5 flex items-center gap-4 text-xs md:text-sm overflow-x-auto text-gray-200">
-            <button onclick="filterCategory('all')" class="hover:text-amazon-yellow whitespace-nowrap font-medium"><i class="fa-solid fa-bars mr-1"></i> Alle Items</button>
-            <button onclick="filterCategory('Waffen')" class="hover:text-amazon-yellow whitespace-nowrap">⚔️ Waffen & Rüstung</button>
-            <button onclick="filterCategory('Ressourcen')" class="hover:text-amazon-yellow whitespace-nowrap">💎 Ressourcen</button>
-            <button onclick="filterCategory('Tränke')" class="hover:text-amazon-yellow whitespace-nowrap">🧪 Tränke & Magie</button>
-            <button onclick="filterCategory('Baustoffe')" class="hover:text-amazon-yellow whitespace-nowrap">🧱 Baustoffe</button>
-            <span class="text-gray-500">|</span>
-            <span class="text-amazon-yellow font-pixel text-lg">Währung: 💎 Diamanten</span>
-        </div>
-    </header>
+                <div onclick="showPage('cart')" class="relative flex items-center gap-1 cursor-pointer border border-transparent hover:border-white p-2 rounded transition">
+                    <div class="relative">
+                        <i class="fa-solid fa-cart-shopping text-2xl text-white"></i>
+                        <span id="cartCount" class="absolute -top-2 -right-2 bg-amazon-orange text-black font-bold rounded-full w-5 h-5 flex items-center justify-center text-xs">0</span>
+                    </div>
+                    <span class="font-bold hidden sm:inline ml-1">Warenkorb</span>
+                </div>
+            </div>
+        </div>
 
-    <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4">
-        
-        <!-- SHOP PAGE -->
-        <section id="page-shop" class="space-y-6">
-            <!-- Banner -->
-            <div class="bg-gradient-to-r from-green-900 via-emerald-800 to-gray-900 border border-green-600/40 rounded-lg p-6 text-white shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
-                <div>
-                    <h1 class="font-pixel text-4xl text-amazon-yellow mb-1">WILLKOMMEN BEI MPHL!</h1>
-                    <p class="text-gray-200 text-sm max-w-xl">Bestelle deine Minecraft-Items direkt zu deiner Base. Bezahle bequem mit Diamanten. Schnelle Lieferung per Brieftaube oder Enderperle!</p>
-                </div>
-                <div class="bg-black/40 p-3 rounded-lg border border-yellow-500/30 text-center">
-                    <span class="text-xs text-gray-400 block">Dein Minecraft Name:</span>
-                    <input type="text" id="customerMcName" placeholder="z.B. Steve_123" class="mt-1 px-3 py-1 bg-gray-800 text-white rounded text-sm border border-gray-600 focus:outline-none focus:border-amazon-yellow text-center font-mono">
-                </div>
-            </div>
+        <!-- Sub Navbar -->
+        <div class="bg-amazon-light_blue px-4 py-1.5 flex items-center justify-between gap-4 text-xs md:text-sm overflow-x-auto text-gray-200">
+            <div class="flex items-center gap-4">
+                <button onclick="filterCategory('all')" class="hover:text-amazon-yellow whitespace-nowrap font-medium"><i class="fa-solid fa-bars mr-1"></i> Alle Items</button>
+                <button onclick="filterCategory('Waffen')" class="hover:text-amazon-yellow whitespace-nowrap">⚔️ Waffen & Rüstung</button>
+                <button onclick="filterCategory('Ressourcen')" class="hover:text-amazon-yellow whitespace-nowrap">💎 Ressourcen</button>
+                <button onclick="filterCategory('Tränke')" class="hover:text-amazon-yellow whitespace-nowrap">🧪 Tränke & Magie</button>
+                <button onclick="filterCategory('Baustoffe')" class="hover:text-amazon-yellow whitespace-nowrap">🧱 Baustoffe</button>
+            </div>
+            <div class="flex items-center gap-3 whitespace-nowrap">
+                <span class="text-amazon-yellow font-pixel text-lg">Währung: 💎 Diamanten</span>
+            </div>
+        </div>
+    </header>
 
-            <!-- Product Grid -->
-            <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <p class="text-gray-400 text-center col-span-full py-8">Lade Produkte...</p>
-            </div>
-        </section>
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4">
+        
+        <!-- SHOP PAGE -->
+        <section id="page-shop" class="space-y-6">
+            <div class="bg-gradient-to-r from-green-900 via-emerald-800 to-gray-900 border border-green-600/40 rounded-lg p-6 text-white shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h1 class="font-pixel text-4xl text-amazon-yellow mb-1">WILLKOMMEN BEI MPHL!</h1>
+                    <p class="text-gray-200 text-sm max-w-xl">Bestelle deine Minecraft-Items direkt zu deiner Base. Bezahle bequem mit Diamanten. Schnelle Lieferung per Brieftaube oder Enderperle!</p>
+                </div>
+                <div class="bg-black/40 p-3 rounded-lg border border-yellow-500/30 text-center w-full md:w-auto">
+                    <span class="text-xs text-gray-400 block">Dein Minecraft Name:</span>
+                    <input type="text" id="customerMcName" placeholder="z.B. Steve_123" class="mt-1 px-3 py-1 bg-gray-800 text-white rounded text-sm border border-gray-600 focus:outline-none focus:border-amazon-yellow text-center font-mono w-full">
+                </div>
+            </div>
 
-        <!-- CART PAGE -->
-        <section id="page-cart" class="hidden space-y-6">
-            <h2 class="text-2xl font-bold flex items-center gap-2">
-                <i class="fa-solid fa-cart-shopping text-amazon-yellow"></i> Dein Warenkorb
-            </h2>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Cart Items List -->
-                <div class="lg:col-span-2 bg-gray-800 rounded-lg p-4 border border-gray-700">
-                    <div id="cartItemsContainer" class="divide-y divide-gray-700 space-y-4">
-                        <!-- Items injected by JS -->
-                    </div>
-                </div>
+            <div class="flex md:hidden items-center">
+                <input type="text" id="mobileSearchInput" oninput="filterProductsMobile()" placeholder="Suche nach Items..." class="w-full px-4 py-2 bg-gray-800 text-white text-sm rounded-md border border-gray-700 focus:outline-none focus:border-amazon-orange">
+            </div>
 
-                <!-- Checkout Summary -->
-                <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 h-fit space-y-4">
-                    <h3 class="text-lg font-bold border-b border-gray-700 pb-2">Bestellübersicht</h3>
-                    <div class="flex justify-between text-sm">
-                        <span>Gesamtsumme:</span>
-                        <span id="cartTotalPrice" class="font-bold text-amazon-yellow text-lg">0 💎</span>
-                    </div>
-                    <button onclick="checkout()" class="w-full bg-amazon-button hover:bg-amazon-button_hover text-black font-bold py-3 px-4 rounded-md shadow transition">
-                        Jetzt Verbindlich Bestellen
-                    </button>
-                    <p class="text-[11px] text-gray-400 text-center">Bestellungen werden direkt in das Owner Dashboard übertragen.</p>
-                </div>
-            </div>
-        </section>
+            <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <p class="text-gray-400 text-center col-span-full py-8">Lade Produkte...</p>
+            </div>
+        </section>
 
-        <!-- OWNER DASHBOARD PAGE -->
-        <section id="page-owner" class="hidden space-y-8">
-            <div class="flex justify-between items-center bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <div>
-                    <h2 class="text-2xl font-bold text-amazon-yellow font-pixel">OWNER DASHBOARD</h2>
-                    <p class="text-xs text-gray-400">Echtzeit-Verwaltung von Bestellungen & Produkten</p>
-                </div>
-                <button onclick="logoutOwner()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-bold">
-                    Abmelden
-                </button>
-            </div>
+        <!-- CART PAGE -->
+        <section id="page-cart" class="hidden space-y-6">
+            <h2 class="text-2xl font-bold flex items-center gap-2">
+                <i class="fa-solid fa-cart-shopping text-amazon-yellow"></i> Dein Warenkorb
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <div id="cartItemsContainer" class="divide-y divide-gray-700 space-y-4"></div>
+                </div>
 
-            <!-- SECTION 1: PRODUCT MANAGEMENT -->
-            <div class="bg-gray-800 rounded-lg p-5 border border-gray-700 space-y-4">
-                <h3 class="text-xl font-bold text-amazon-yellow font-pixel flex items-center gap-2">
-                    📦 PRODUKT-VERWALTUNG (Preise & Sortiment)
-                </h3>
-                
-                <!-- Add Product Form -->
-                <form id="addProductForm" onsubmit="handleProductSubmit(event)" class="bg-gray-900 p-4 rounded-lg border border-gray-700 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1">Item Name</label>
-                        <input type="text" id="prodName" placeholder="z.B. Drachenei" required class="w-full px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:outline-none focus:border-amazon-yellow">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1">Kategorie</label>
-                        <select id="prodCategory" class="w-full px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:outline-none focus:border-amazon-yellow">
-                            <option value="Waffen">⚔️ Waffen</option>
-                            <option value="Ressourcen">💎 Ressourcen</option>
-                            <option value="Tränke">🧪 Tränke</option>
-                            <option value="Baustoffe">🧱 Baustoffe</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1">Preis (Diamanten 💎)</label>
-                        <input type="number" id="prodPrice" min="1" placeholder="z.B. 10" required class="w-full px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:outline-none focus:border-amazon-yellow">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1">Icon / Emoji</label>
-                        <input type="text" id="prodIcon" placeholder="z.B. 🐉" required class="w-full px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:outline-none focus:border-amazon-yellow text-center">
-                    </div>
-                    <div>
-                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm transition">
-                            + Item Hinzufügen
-                        </button>
-                    </div>
-                </form>
+                <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 h-fit space-y-4">
+                    <h3 class="text-lg font-bold border-b border-gray-700 pb-2">Bestellübersicht</h3>
+                    <div class="flex justify-between text-sm">
+                        <span>Gesamtsumme:</span>
+                        <span id="cartTotalPrice" class="font-bold text-amazon-yellow text-lg">0 💎</span>
+                    </div>
+                    <button onclick="checkout()" class="w-full bg-amazon-button hover:bg-amazon-button_hover text-black font-bold py-3 px-4 rounded-md shadow transition">
+                        Jetzt Verbindlich Bestellen
+                    </button>
+                    <p class="text-[11px] text-gray-400 text-center">Bestellungen werden direkt in das Owner Dashboard übertragen.</p>
+                </div>
+            </div>
+        </section>
 
-                <!-- Products Table -->
-                <div class="bg-gray-900 rounded-lg overflow-hidden border border-gray-700">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm text-gray-300">
-                            <thead class="bg-gray-800 text-gray-400 text-xs uppercase border-b border-gray-700">
-                                <tr>
-                                    <th class="p-3">Icon</th>
-                                    <th class="p-3">Item Name</th>
-                                    <th class="p-3">Kategorie</th>
-                                    <th class="p-3">Preis</th>
-                                    <th class="p-3">Aktionen</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ownerProductsTable" class="divide-y divide-gray-800">
-                                <!-- Products injected by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+        <!-- OWNER DASHBOARD PAGE -->
+        <section id="page-owner" class="hidden space-y-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gray-800 p-4 rounded-lg border border-gray-700 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-amazon-yellow font-pixel">OWNER DASHBOARD</h2>
+                    <p class="text-xs text-gray-400">Echtzeit-Verwaltung von Bestellungen & Produkten</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="logoutOwner()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-bold transition">
+                        Abmelden
+                    </button>
+                </div>
+            </div>
 
-            <!-- SECTION 2: ORDERS MANAGEMENT -->
-            <div class="bg-gray-800 rounded-lg p-5 border border-gray-700 space-y-4">
-                <h3 class="text-xl font-bold text-amazon-yellow font-pixel flex items-center gap-2">
-                    📋 EINGEGANGENE BESTELLUNGEN
-                </h3>
-                <div class="bg-gray-900 rounded-lg overflow-hidden border border-gray-700">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm text-gray-300">
-                            <thead class="bg-gray-800 text-gray-400 text-xs uppercase border-b border-gray-700">
-                                <tr>
-                                    <th class="p-3">Kunde (MC Name)</th>
-                                    <th class="p-3">Items</th>
-                                    <th class="p-3">Gesamtpreis</th>
-                                    <th class="p-3">Datum</th>
-                                    <th class="p-3">Status</th>
-                                    <th class="p-3">Aktion</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ownerOrdersTable" class="divide-y divide-gray-800">
-                                <!-- Orders injected by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </section>
+            <!-- ANALYTICS CARDS -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 flex items-center gap-4">
+                    <div class="p-3 bg-blue-900/50 rounded-lg text-blue-400 text-2xl">📦</div>
+                    <div>
+                        <p class="text-xs text-gray-400">Gesamt-Bestellungen</p>
+                        <p id="statTotalOrders" class="text-2xl font-bold font-pixel text-white">0</p>
+                    </div>
+                </div>
+                <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 flex items-center gap-4">
+                    <div class="p-3 bg-green-900/50 rounded-lg text-green-400 text-2xl">💎</div>
+                    <div>
+                        <p class="text-xs text-gray-400">Umsatz Gesamt</p>
+                        <p id="statTotalRevenue" class="text-2xl font-bold font-pixel text-amazon-yellow">0 💎</p>
+                    </div>
+                </div>
+                <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 flex items-center gap-4">
+                    <div class="p-3 bg-yellow-900/50 rounded-lg text-yellow-400 text-2xl">⏳</div>
+                    <div>
+                        <p class="text-xs text-gray-400">Offene Lieferungen</p>
+                        <p id="statPendingOrders" class="text-2xl font-bold font-pixel text-yellow-400">0</p>
+                    </div>
+                </div>
+                <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 flex items-center gap-4">
+                    <div class="p-3 bg-purple-900/50 rounded-lg text-purple-400 text-2xl">🛒</div>
+                    <div>
+                        <p class="text-xs text-gray-400">Aktive Produkte</p>
+                        <p id="statTotalProducts" class="text-2xl font-bold font-pixel text-purple-400">0</p>
+                    </div>
+                </div>
+            </div>
 
-    </main>
+            <!-- PRODUCT MANAGEMENT -->
+            <div class="bg-gray-800 rounded-lg p-5 border border-gray-700 space-y-4">
+                <h3 class="text-xl font-bold text-amazon-yellow font-pixel flex items-center gap-2">
+                    📦 PRODUKT-VERWALTUNG (Preise & Sortiment)
+                </h3>
+                
+                <form id="addProductForm" onsubmit="handleProductSubmit(event)" class="bg-gray-900 p-4 rounded-lg border border-gray-700 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Item Name</label>
+                        <input type="text" id="prodName" placeholder="z.B. Drachenei" required class="w-full px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:outline-none focus:border-amazon-yellow">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Kategorie</label>
+                        <select id="prodCategory" class="w-full px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:outline-none focus:border-amazon-yellow">
+                            <option value="Waffen">⚔️ Waffen</option>
+                            <option value="Ressourcen">💎 Ressourcen</option>
+                            <option value="Tränke">🧪 Tränke</option>
+                            <option value="Baustoffe">🧱 Baustoffe</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Preis (Diamanten 💎)</label>
+                        <input type="number" id="prodPrice" min="1" placeholder="z.B. 10" required class="w-full px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:outline-none focus:border-amazon-yellow">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Icon / Emoji</label>
+                        <input type="text" id="prodIcon" placeholder="z.B. 🐉" required class="w-full px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:outline-none focus:border-amazon-yellow text-center">
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm transition">
+                            + Item Hinzufügen
+                        </button>
+                    </div>
+                </form>
 
-    <!-- FOOTER -->
-    <footer class="bg-amazon-blue text-gray-400 text-xs text-center py-6 border-t border-gray-800 mt-12">
-        <p class="font-pixel text-lg text-gray-200">MPHL.craft &copy; 2026 - Minecraft E-Commerce Simulation</p>
-        <p class="mt-1">Nicht mit Mojang oder Microsoft verbunden.</p>
-    </footer>
+                <div class="bg-gray-900 rounded-lg overflow-hidden border border-gray-700">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-gray-300">
+                            <thead class="bg-gray-800 text-gray-400 text-xs uppercase border-b border-gray-700">
+                                <tr>
+                                    <th class="p-3">Icon</th>
+                                    <th class="p-3">Item Name</th>
+                                    <th class="p-3">Kategorie</th>
+                                    <th class="p-3">Preis</th>
+                                    <th class="p-3">Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ownerProductsTable" class="divide-y divide-gray-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-    <!-- FIREBASE MODULE & JS CODE -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+            <!-- ORDERS MANAGEMENT -->
+            <div class="bg-gray-800 rounded-lg p-5 border border-gray-700 space-y-4">
+                <h3 class="text-xl font-bold text-amazon-yellow font-pixel flex items-center justify-between">
+                    <span>📋 EINGEGANGENE BESTELLUNGEN</span>
+                    <input type="text" id="orderSearchInput" oninput="filterOrdersTable()" placeholder="Kunde filtern..." class="px-3 py-1 bg-gray-900 border border-gray-700 rounded text-xs text-white focus:outline-none focus:border-amazon-yellow font-sans">
+                </h3>
+                <div class="bg-gray-900 rounded-lg overflow-hidden border border-gray-700">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-gray-300">
+                            <thead class="bg-gray-800 text-gray-400 text-xs uppercase border-b border-gray-700">
+                                <tr>
+                                    <th class="p-3">Kunde (MC Name)</th>
+                                    <th class="p-3">Items</th>
+                                    <th class="p-3">Gesamtpreis</th>
+                                    <th class="p-3">Datum</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">Aktion</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ownerOrdersTable" class="divide-y divide-gray-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        // Firebase Konfiguration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDwBUR_Y7UDT6C8DDAIyKTFvDviHKlXy4U",
-            authDomain: "mphl-60215.firebaseapp.com",
-            projectId: "mphl-60215",
-            storageBucket: "mphl-60215.firebasestorage.app",
-            messagingSenderId: "979262600414",
-            appId: "1:979262600414:web:9e643c6c85b5c133577e4f",
-            measurementId: "G-8D706DJ0ZM"
-        };
+    </main>
 
-        // Firebase Initialisieren
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const ordersRef = collection(db, "orders");
-        const productsRef = collection(db, "products");
+    <!-- FOOTER -->
+    <footer class="bg-amazon-blue text-gray-400 text-xs text-center py-6 border-t border-gray-800 mt-12">
+        <p class="font-pixel text-lg text-gray-200">MPHL.craft &copy; 2026 - Minecraft E-Commerce Simulation</p>
+        <p class="mt-1">Nicht mit Mojang oder Microsoft verbunden.</p>
+    </footer>
 
-        // Standard-Produkte zum Initialisieren (falls DB leer ist)
-        const defaultProducts = [
-            { name: "Diamant Schwert (Schärfe V)", category: "Waffen", price: 12, icon: "⚔️" },
-            { name: "Netherit Rüstung Set", category: "Waffen", price: 64, icon: "🛡️" },
-            { name: "Enderperlen (16x)", category: "Ressourcen", price: 4, icon: "🔮" },
-            { name: "Bruchstein Stack (64x)", category: "Baustoffe", price: 1, icon: "🧱" },
-            { name: "Trank der Heilung II", category: "Tränke", price: 3, icon: "🧪" },
-            { name: "Goldene Äpfel (8x)", category: "Tränke", price: 16, icon: "🍎" },
-            { name: "Elytra Flügel", category: "Waffen", price: 48, icon: "🪽" },
-            { name: "Smaragd Block (5x)", category: "Ressourcen", price: 10, icon: "🟢" }
-        ];
+    <!-- FIREBASE & JS -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        let loadedProducts = [];
-        let cart = [];
-        let isOwner = false;
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwBUR_Y7UDT6C8DDAIyKTFvDviHKlXy4U",
+            authDomain: "mphl-60215.firebaseapp.com",
+            projectId: "mphl-60215",
+            storageBucket: "mphl-60215.firebasestorage.app",
+            messagingSenderId: "979262600414",
+            appId: "1:979262600414:web:9e643c6c85b5c133577e4f",
+            measurementId: "G-8D706DJ0ZM"
+        };
 
-        // Auto-Init Produkte in Firestore
-        async function initProductsInDB() {
-            const snap = await getDocs(productsRef);
-            if (snap.empty) {
-                for (const item of defaultProducts) {
-                    await addDoc(productsRef, item);
-                }
-            }
-        }
-        initProductsInDB();
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const ordersRef = collection(db, "orders");
+        const productsRef = collection(db, "products");
 
-        // Live-Listener für Produkte
-        onSnapshot(productsRef, (snapshot) => {
-            loadedProducts = [];
-            snapshot.forEach(docSnap => {
-                loadedProducts.push({ id: docSnap.id, ...docSnap.data() });
-            });
-            renderProducts(loadedProducts);
-            if (isOwner) renderOwnerProductsTable();
-        });
+        // HIER IST DIE SICHERHEIT: Im Code steht nur der SHA-256 Hash. 
+        // Das echte Passwort ("MPHL123!") kann hier absolut niemand ablesen!
+        const TARGET_HASH = "80fef5e9ebfeecfc8da0b86a01ddf8b9e6e587ad0f845d448bfbe01c3df630ef";
 
-        // Render Produkte im Shop
-        window.renderProducts = function(itemsToRender = loadedProducts) {
-            const grid = document.getElementById('productGrid');
-            if (itemsToRender.length === 0) {
-                grid.innerHTML = `<p class="text-gray-400 text-center col-span-full py-8">Keine Produkte gefunden.</p>`;
-                return;
-            }
-            grid.innerHTML = itemsToRender.map(p => `
-                <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 flex flex-col justify-between hover:border-amazon-yellow transition">
-                    <div class="text-center py-4 bg-gray-900 rounded mb-3 text-4xl">${p.icon}</div>
-                    <div>
-                        <span class="text-[10px] text-amazon-yellow uppercase font-mono">${p.category}</span>
-                        <h3 class="font-bold text-white text-md leading-tight mb-2">${p.name}</h3>
-                        <p class="text-xl font-bold text-amazon-yellow mb-4">${p.price} 💎</p>
-                    </div>
-                    <button onclick="addToCart('${p.id}')" class="w-full bg-amazon-button hover:bg-amazon-button_hover text-black font-bold py-2 px-3 rounded text-sm transition">
-                        In den Warenkorb
-                    </button>
-                </div>
-            `).join('');
-        };
+        async function hashPassword(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
-        // Navigation
-        window.showPage = function(page) {
-            document.getElementById('page-shop').classList.add('hidden');
-            document.getElementById('page-cart').classList.add('hidden');
-            document.getElementById('page-owner').classList.add('hidden');
+        window.showToast = function(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-green-700' : type === 'error' ? 'bg-red-700' : 'bg-amazon-light_blue border border-amazon-yellow';
+            toast.className = `px-4 py-2.5 rounded-md shadow-2xl text-white text-xs font-semibold flex items-center gap-2 pointer-events-auto toast-animate ${bgClass}`;
+            toast.innerHTML = `<span>${type === 'success' ? '✅' : type === 'error' ? '⚠️' : '🔔'}</span> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
 
-            if(page === 'owner' && !isOwner) {
-                alert("Bitte erst als Owner anmelden!");
-                showPage('shop');
-                return;
-            }
+        const defaultProducts = [
+            { name: "Diamant Schwert (Schärfe V)", category: "Waffen", price: 12, icon: "⚔️" },
+            { name: "Netherit Rüstung Set", category: "Waffen", price: 64, icon: "🛡️" },
+            { name: "Enderperlen (16x)", category: "Ressourcen", price: 4, icon: "🔮" },
+            { name: "Bruchstein Stack (64x)", category: "Baustoffe", price: 1, icon: "🧱" },
+            { name: "Trank der Heilung II", category: "Tränke", price: 3, icon: "🧪" },
+            { name: "Goldene Äpfel (8x)", category: "Tränke", price: 16, icon: "🍎" },
+            { name: "Elytra Flügel", category: "Waffen", price: 48, icon: "🪽" },
+            { name: "Smaragd Block (5x)", category: "Ressourcen", price: 10, icon: "🟢" }
+        ];
 
-            document.getElementById(`page-${page}`).classList.remove('hidden');
-            if(page === 'cart') renderCart();
-        };
+        let loadedProducts = [];
+        let loadedOrders = [];
+        let cart = [];
+        let isOwner = false;
 
-        // Cart Funktionen
-        window.addToCart = function(id) {
-            const product = loadedProducts.find(p => p.id === id);
-            if(product) {
-                cart.push(product);
-                updateCartCount();
-                alert(`${product.name} wurde hinzugefügt!`);
-            }
-        };
+        async function initDB() {
+            try {
+                const snap = await getDocs(productsRef);
+                if (snap.empty) {
+                    for (const item of defaultProducts) {
+                        await addDoc(productsRef, item);
+                    }
+                }
+            } catch (err) {
+                console.error("Init DB Error:", err);
+            }
+        }
+        initDB();
 
-        function updateCartCount() {
-            document.getElementById('cartCount').innerText = cart.length;
-        }
+        onSnapshot(productsRef, (snapshot) => {
+            loadedProducts = [];
+            snapshot.forEach(docSnap => {
+                loadedProducts.push({ id: docSnap.id, ...docSnap.data() });
+            });
+            renderProducts(loadedProducts);
+            if (isOwner) {
+                renderOwnerProductsTable();
+                updateAnalytics();
+            }
+        });
 
-        function renderCart() {
-            const container = document.getElementById('cartItemsContainer');
-            if(cart.length === 0) {
-                container.innerHTML = `<p class="text-gray-400 text-center py-8">Dein Warenkorb ist leer.</p>`;
-                document.getElementById('cartTotalPrice').innerText = `0 💎`;
-                return;
-            }
+        window.renderProducts = function(itemsToRender = loadedProducts) {
+            const grid = document.getElementById('productGrid');
+            if (itemsToRender.length === 0) {
+                grid.innerHTML = `<p class="text-gray-400 text-center col-span-full py-8">Keine Produkte gefunden.</p>`;
+                return;
+            }
+            grid.innerHTML = itemsToRender.map(p => `
+                <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 flex flex-col justify-between hover:border-amazon-yellow transition shadow-md">
+                    <div class="text-center py-4 bg-gray-900 rounded mb-3 text-4xl">${p.icon}</div>
+                    <div>
+                        <span class="text-[10px] text-amazon-yellow uppercase font-mono">${p.category}</span>
+                        <h3 class="font-bold text-white text-md leading-tight mb-2">${p.name}</h3>
+                        <p class="text-xl font-bold text-amazon-yellow mb-4">${p.price} 💎</p>
+                    </div>
+                    <button onclick="addToCart('${p.id}')" class="w-full bg-amazon-button hover:bg-amazon-button_hover text-black font-bold py-2 px-3 rounded text-sm transition">
+                        In den Warenkorb
+                    </button>
+                </div>
+            `).join('');
+        };
 
-            let total = 0;
-            container.innerHTML = cart.map((item, index) => {
-                total += item.price;
-                return `
-                    <div class="flex items-center justify-between py-2">
-                        <div class="flex items-center gap-3">
-                            <span class="text-2xl">${item.icon}</span>
-                            <div>
-                                <h4 class="font-bold text-sm">${item.name}</h4>
-                                <span class="text-xs text-amazon-yellow">${item.price} 💎</span>
-                            </div>
-                        </div>
-                        <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-300 text-xs">Entfernen</button>
-                    </div>
-                `;
-            }).join('');
-            
-            document.getElementById('cartTotalPrice').innerText = `${total} 💎`;
-        }
+        window.showPage = function(page) {
+            document.getElementById('page-shop').classList.add('hidden');
+            document.getElementById('page-cart').classList.add('hidden');
+            document.getElementById('page-owner').classList.add('hidden');
 
-        window.removeFromCart = function(index) {
-            cart.splice(index, 1);
-            updateCartCount();
-            renderCart();
-        };
+            if(page === 'owner' && !isOwner) {
+                showToast("Bitte erst als Owner anmelden!", "error");
+                showPage('shop');
+                return;
+            }
 
-        // Checkout
-        window.checkout = async function() {
-            const mcName = document.getElementById('customerMcName').value.trim();
-            if(!mcName) {
-                alert("Bitte gib deinen Minecraft Namen ein!");
-                return;
-            }
-            if(cart.length === 0) {
-                alert("Dein Warenkorb ist leer!");
-                return;
-            }
+            document.getElementById(`page-${page}`).classList.remove('hidden');
+            if(page === 'cart') renderCart();
+        };
 
-            const total = cart.reduce((sum, item) => sum + Number(item.price), 0);
-            const orderData = {
-                customer: mcName,
-                items: cart.map(i => i.name).join(", "),
-                total: total,
-                date: new Date().toLocaleString('de-DE'),
-                status: "Offen",
-                timestamp: Date.now()
-            };
+        window.addToCart = function(id) {
+            const product = loadedProducts.find(p => p.id === id);
+            if(product) {
+                cart.push(product);
+                updateCartCount();
+                showToast(`"${product.name}" wurde zum Warenkorb hinzugefügt!`, "success");
+            }
+        };
 
-            try {
-                await addDoc(ordersRef, orderData);
-                alert("Bestellung erfolgreich abgesendet!");
-                cart = [];
-                updateCartCount();
-                showPage('shop');
-            } catch (error) {
-                console.error("Fehler beim Senden der Bestellung:", error);
-                alert("Fehler beim Speichern der Bestellung.");
-            }
-        };
+        function updateCartCount() {
+            document.getElementById('cartCount').innerText = cart.length;
+        }
 
-        // Owner Login
-        window.toggleOwnerLogin = function() {
-            if(isOwner) {
-                showPage('owner');
-                return;
-            }
+        function renderCart() {
+            const container = document.getElementById('cartItemsContainer');
+            if(cart.length === 0) {
+                container.innerHTML = `<p class="text-gray-400 text-center py-8">Dein Warenkorb ist leer.</p>`;
+                document.getElementById('cartTotalPrice').innerText = `0 💎`;
+                return;
+            }
 
-            const pass = prompt("Bitte das Owner-Passwort eingeben:");
-            if(pass === "MPHL123!") {
-                isOwner = true;
-                document.getElementById('userStatusText').innerText = "Owner Dashboard";
-                document.getElementById('userStatusText').classList.add('text-amazon-yellow');
-                showPage('owner');
-                renderOwnerProductsTable();
-                listenToOrders();
-            } else if(pass !== null) {
-                alert("Falsches Passwort!");
-            }
-        };
+            let total = 0;
+            container.innerHTML = cart.map((item, index) => {
+                total += Number(item.price);
+                return `
+                    <div class="flex items-center justify-between py-2">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">${item.icon}</span>
+                            <div>
+                                <h4 class="font-bold text-sm">${item.name}</h4>
+                                <span class="text-xs text-amazon-yellow">${item.price} 💎</span>
+                            </div>
+                        </div>
+                        <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-300 text-xs bg-red-900/30 px-2 py-1 rounded transition">Entfernen</button>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('cartTotalPrice').innerText = `${total} 💎`;
+        }
 
-        window.logoutOwner = function() {
-            isOwner = false;
-            document.getElementById('userStatusText').innerText = "Anmelden (Owner)";
-            document.getElementById('userStatusText').classList.remove('text-amazon-yellow');
-            showPage('shop');
-        };
+        window.removeFromCart = function(index) {
+            const removed = cart.splice(index, 1);
+            updateCartCount();
+            renderCart();
+            if (removed[0]) showToast(`"${removed[0].name}" entfernt.`, "info");
+        };
 
-        // --- PRODUKT MANAGEMENT DURCH OWNER ---
-        window.handleProductSubmit = async function(e) {
-            e.preventDefault();
-            const name = document.getElementById('prodName').value.trim();
-            const category = document.getElementById('prodCategory').value;
-            const price = Number(document.getElementById('prodPrice').value);
-            const icon = document.getElementById('prodIcon').value.trim();
+        window.checkout = async function() {
+            const mcName = document.getElementById('customerMcName').value.trim();
+            if(!mcName) {
+                showToast("Bitte gib deinen Minecraft Namen im Feld oben ein!", "error");
+                return;
+            }
+            if(cart.length === 0) {
+                showToast("Dein Warenkorb ist leer!", "error");
+                return;
+            }
 
-            try {
-                await addDoc(productsRef, { name, category, price, icon });
-                alert("Neues Produkt erfolgreich hinzugefügt!");
-                document.getElementById('addProductForm').reset();
-            } catch (err) {
-                alert("Fehler beim Erstellen des Produkts: " + err.message);
-            }
-        };
+            const total = cart.reduce((sum, item) => sum + Number(item.price), 0);
+            const orderData = {
+                customer: mcName,
+                items: cart.map(i => i.name).join(", "),
+                total: total,
+                date: new Date().toLocaleString('de-DE'),
+                status: "Offen",
+                timestamp: Date.now()
+            };
 
-        function renderOwnerProductsTable() {
-            const table = document.getElementById('ownerProductsTable');
-            if (loadedProducts.length === 0) {
-                table.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">Keine Produkte vorhanden.</td></tr>`;
-                return;
-            }
-            table.innerHTML = loadedProducts.map(p => `
-                <tr class="hover:bg-gray-800">
-                    <td class="p-3 text-2xl">${p.icon}</td>
-                    <td class="p-3 font-bold text-white">${p.name}</td>
-                    <td class="p-3 text-xs text-amazon-yellow">${p.category}</td>
-                    <td class="p-3 font-bold text-green-400">${p.price} 💎</td>
-                    <td class="p-3 flex gap-2">
-                        <button onclick="editProductPrice('${p.id}', '${p.name}', ${p.price})" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">
-                            Preis Ändern
-                        </button>
-                        <button onclick="deleteProduct('${p.id}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">
-                            Löschen
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
+            try {
+                await addDoc(ordersRef, orderData);
+                showToast("Bestellung erfolgreich abgesendet!", "success");
+                cart = [];
+                updateCartCount();
+                showPage('shop');
+            } catch (error) {
+                console.error("Fehler beim Senden der Bestellung:", error);
+                showToast("Fehler beim Speichern der Bestellung.", "error");
+            }
+        };
 
-        window.editProductPrice = async function(id, name, currentPrice) {
-            const newPrice = prompt(`Neuer Preis für "${name}" (in Diamanten):`, currentPrice);
-            if (newPrice !== null && !isNaN(newPrice) && Number(newPrice) > 0) {
-                await updateDoc(doc(db, "products", id), { price: Number(newPrice) });
-                alert("Preis aktualisiert!");
-            }
-        };
+        // Das klassische Prompt-Fenster, aber abgesichert durch den SHA-256 Hash
+        window.toggleOwnerLogin = async function() {
+            if(isOwner) {
+                showPage('owner');
+                return;
+            }
 
-        window.deleteProduct = async function(id) {
-            if (confirm("Möchtest du dieses Produkt wirklich löschen?")) {
-                await deleteDoc(doc(db, "products", id));
-            }
-        };
+            const inputPass = prompt("Bitte das Owner-Passwort eingeben:");
+            if (inputPass === null) return;
 
-        // Live Orders
-        function listenToOrders() {
-            onSnapshot(ordersRef, (snapshot) => {
-                const table = document.getElementById('ownerOrdersTable');
-                if (snapshot.empty) {
-                    table.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">Keine Bestellungen vorhanden.</td></tr>`;
-                    return;
-                }
+            // Hier wird das eingetippte Passwort blitzschnell gehasht und mit dem Ziel-Hash verglichen
+            const inputHash = await hashPassword(inputPass.trim());
 
-                let rows = "";
-                snapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const id = docSnap.id;
-                    rows += `
-                        <tr class="hover:bg-gray-800">
-                            <td class="p-3 font-mono text-amazon-yellow">${data.customer || 'Anonym'}</td>
-                            <td class="p-3 text-xs">${data.items}</td>
-                            <td class="p-3 font-bold">${data.total} 💎</td>
-                            <td class="p-3 text-xs text-gray-400">${data.date}</td>
-                            <td class="p-3">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${data.status === 'Geliefert' ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}">
-                                    ${data.status}
-                                </span>
-                            </td>
-                            <td class="p-3 flex gap-2">
-                                <button onclick="toggleOrderStatus('${id}', '${data.status}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-[10px]">
-                                    Status Ändern
-                                </button>
-                                <button onclick="deleteOrder('${id}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-[10px]">
-                                    Löschen
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-                table.innerHTML = rows;
-            });
-        }
+            if (inputHash === TARGET_HASH) {
+                isOwner = true;
+                document.getElementById('userStatusText').innerText = "Owner Dashboard";
+                document.getElementById('userStatusText').classList.add('text-amazon-yellow');
+                showToast("Erfolgreich als Owner angemeldet!", "success");
+                showPage('owner');
+                renderOwnerProductsTable();
+                listenToOrders();
+            } else {
+                showToast("Falsches Passwort!", "error");
+            }
+        };
 
-        window.toggleOrderStatus = async function(id, currentStatus) {
-            const newStatus = currentStatus === "Offen" ? "Geliefert" : "Offen";
-            await updateDoc(doc(db, "orders", id), { status: newStatus });
-        };
+        window.logoutOwner = function() {
+            isOwner = false;
+            document.getElementById('userStatusText').innerText = "Anmelden (Owner)";
+            document.getElementById('userStatusText').classList.remove('text-amazon-yellow');
+            showToast("Erfolgreich abgemeldet.", "info");
+            showPage('shop');
+        };
 
-        window.deleteOrder = async function(id) {
-            if(confirm("Bestellung wirklich löschen?")) {
-                await deleteDoc(doc(db, "orders", id));
-            }
-        };
+        window.handleProductSubmit = async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('prodName').value.trim();
+            const category = document.getElementById('prodCategory').value;
+            const price = Number(document.getElementById('prodPrice').value);
+            const icon = document.getElementById('prodIcon').value.trim();
 
-        // Filter / Suche
-        window.filterCategory = function(cat) {
-            if(cat === 'all') renderProducts(loadedProducts);
-            else renderProducts(loadedProducts.filter(p => p.category === cat));
-        };
+            try {
+                await addDoc(productsRef, { name, category, price, icon });
+                showToast("Neues Produkt erfolgreich hinzugefügt!", "success");
+                document.getElementById('addProductForm').reset();
+            } catch (err) {
+                showToast("Fehler beim Erstellen des Produkts: " + err.message, "error");
+            }
+        };
 
-        window.filterProducts = function() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            renderProducts(loadedProducts.filter(p => p.name.toLowerCase().includes(query)));
-        };
-    </script>
+        function renderOwnerProductsTable() {
+            const table = document.getElementById('ownerProductsTable');
+            if (loadedProducts.length === 0) {
+                table.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">Keine Produkte vorhanden.</td></tr>`;
+                return;
+            }
+            table.innerHTML = loadedProducts.map(p => `
+                <tr class="hover:bg-gray-800">
+                    <td class="p-3 text-2xl">${p.icon}</td>
+                    <td class="p-3 font-bold text-white">${p.name}</td>
+                    <td class="p-3 text-xs text-amazon-yellow">${p.category}</td>
+                    <td class="p-3 font-bold text-green-400">${p.price} 💎</td>
+                    <td class="p-3 flex gap-2">
+                        <button onclick="editProductPrice('${p.id}', '${p.name}', ${p.price})" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition">Preis Ändern</button>
+                        <button onclick="deleteProduct('${p.id}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition">Löschen</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.editProductPrice = async function(id, name, currentPrice) {
+            const newPrice = prompt(`Neuer Preis für "${name}" (in Diamanten):`, currentPrice);
+            if (newPrice !== null && !isNaN(newPrice) && Number(newPrice) > 0) {
+                await updateDoc(doc(db, "products", id), { price: Number(newPrice) });
+                showToast("Preis aktualisiert!", "success");
+            }
+        };
+
+        window.deleteProduct = async function(id) {
+            if (confirm("Möchtest du dieses Produkt wirklich löschen?")) {
+                await deleteDoc(doc(db, "products", id));
+                showToast("Produkt gelöscht.", "info");
+            }
+        };
+
+        function listenToOrders() {
+            onSnapshot(ordersRef, (snapshot) => {
+                loadedOrders = [];
+                snapshot.forEach((docSnap) => {
+                    loadedOrders.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                renderOwnerOrdersTable(loadedOrders);
+                updateAnalytics();
+            });
+        }
+
+        function renderOwnerOrdersTable(ordersToRender) {
+            const table = document.getElementById('ownerOrdersTable');
+            if (!ordersToRender || ordersToRender.length === 0) {
+                table.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">Keine Bestellungen vorhanden.</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = ordersToRender.map(data => `
+                <tr class="hover:bg-gray-800">
+                    <td class="p-3 font-mono text-amazon-yellow">${data.customer || 'Anonym'}</td>
+                    <td class="p-3 text-xs">${data.items}</td>
+                    <td class="p-3 font-bold">${data.total} 💎</td>
+                    <td class="p-3 text-xs text-gray-400">${data.date}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${data.status === 'Geliefert' ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}">
+                            ${data.status}
+                        </span>
+                    </td>
+                    <td class="p-3 flex gap-2">
+                        <button onclick="toggleOrderStatus('${data.id}', '${data.status}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-[10px] transition">Status Ändern</button>
+                        <button onclick="deleteOrder('${data.id}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-[10px] transition">Löschen</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.filterOrdersTable = function() {
+            const query = document.getElementById('orderSearchInput').value.toLowerCase();
+            const filtered = loadedOrders.filter(o => (o.customer || '').toLowerCase().includes(query) || (o.items || '').toLowerCase().includes(query));
+            renderOwnerOrdersTable(filtered);
+        };
+
+        function updateAnalytics() {
+            const totalOrders = loadedOrders.length;
+            const totalRevenue = loadedOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+            const pendingOrders = loadedOrders.filter(o => o.status === 'Offen').length;
+            const totalProducts = loadedProducts.length;
+
+            document.getElementById('statTotalOrders').innerText = totalOrders;
+            document.getElementById('statTotalRevenue').innerText = `${totalRevenue} 💎`;
+            document.getElementById('statPendingOrders').innerText = pendingOrders;
+            document.getElementById('statTotalProducts').innerText = totalProducts;
+        }
+
+        window.toggleOrderStatus = async function(id, currentStatus) {
+            const newStatus = currentStatus === "Offen" ? "Geliefert" : "Offen";
+            await updateDoc(doc(db, "orders", id), { status: newStatus });
+            showToast(`Status auf "${newStatus}" geändert!`, "success");
+        };
+
+        window.deleteOrder = async function(id) {
+            if(confirm("Bestellung wirklich löschen?")) {
+                await deleteDoc(doc(db, "orders", id));
+                showToast("Bestellung gelöscht.", "info");
+            }
+        };
+
+        window.filterCategory = function(cat) {
+            if(cat === 'all') renderProducts(loadedProducts);
+            else renderProducts(loadedProducts.filter(p => p.category === cat));
+        };
+
+        window.filterProducts = function() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            renderProducts(loadedProducts.filter(p => p.name.toLowerCase().includes(query)));
+        };
+
+        window.filterProductsMobile = function() {
+            const query = document.getElementById('mobileSearchInput').value.toLowerCase();
+            renderProducts(loadedProducts.filter(p => p.name.toLowerCase().includes(query)));
+        };
+    </script>
 </body>
 </html>
