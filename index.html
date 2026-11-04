@@ -1,5 +1,231 @@
 <!DOCTYPE html>
-                        <tbody id="ownerProductsTable" class="divide-y divide-gray-800"></tbody>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPHL.craft | Minecraft Item Marketplace</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              amazon: {
+                blue: '#131921',
+                light_blue: '#232f3e',
+                yellow: '#febd69',
+                orange: '#f3a847',
+                button: '#ffd814',
+                button_hover: '#f7ca00'
+              },
+              mc: {
+                grass: '#5b8731',
+                dirt: '#866043',
+                stone: '#737373',
+                diamond: '#4adedf',
+                gold: '#fdf55f',
+                netherite: '#4a4347',
+                emerald: '#47e266'
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              pixel: ['"VT323"', 'monospace']
+            }
+          }
+        }
+      }
+    </script>
+
+    <style>
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: #131921; }
+      ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+      .pixelated { image-rendering: pixelated; image-rendering: crisp-edges; }
+      @keyframes slideIn {
+        from { transform: translateY(100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .toast-animate { animation: slideIn 0.3s ease-out forwards; }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col selection:bg-amazon-yellow selection:text-black relative">
+
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- OWNER LOGIN -->
+    <div id="loginModal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <h3 class="text-xl font-bold text-amazon-yellow font-pixel">🔐 OWNER ANMELDUNG</h3>
+            <p class="text-xs text-gray-400">Bitte gib das Owner-Passwort ein.</p>
+            <div>
+                <input type="password" id="modalPasswordInput" placeholder="Passwort eingeben..." class="w-full bg-gray-900 border border-gray-600 rounded p-3 text-white focus:outline-none focus:border-amazon-yellow">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="submitOwnerLogin()" class="flex-1 bg-amazon-button hover:bg-amazon-button_hover text-black font-bold py-2 rounded transition">Anmelden</button>
+                <button onclick="closeLoginModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 rounded transition">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="bg-amazon-blue border-b border-gray-700 sticky top-0 z-40 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="showPage('shop')">
+                <span class="text-3xl">⛏️</span>
+                <div>
+                    <h1 class="font-pixel text-3xl text-white leading-none">MPHL<span class="text-amazon-yellow">.craft</span></h1>
+                    <p class="text-[9px] text-gray-400 tracking-widest uppercase">Minecraft Marketplace</p>
+                </div>
+            </div>
+
+            <div class="hidden md:flex flex-1 max-w-xl">
+                <input id="searchInput" type="text" placeholder="Suche nach Minecraft Items..." oninput="filterProducts()" class="w-full px-4 py-2 rounded-l bg-white text-gray-900 outline-none">
+                <button class="bg-amazon-yellow text-black px-4 rounded-r"><i class="fas fa-search"></i></button>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button onclick="toggleOwnerLogin()" class="text-gray-300 hover:text-amazon-yellow text-sm flex items-center gap-2">
+                    <i class="fas fa-user-shield"></i>
+                    <span id="userStatusText">Anmelden (Owner)</span>
+                </button>
+                <button onclick="showPage('cart')" class="relative text-white hover:text-amazon-yellow text-2xl">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cartCount" class="absolute -top-2 -right-3 bg-amazon-yellow text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="md:hidden px-4 pb-3">
+            <input id="mobileSearchInput" type="text" placeholder="Produkte suchen..." oninput="filterProductsMobile()" class="w-full px-3 py-2 rounded bg-white text-gray-900 outline-none">
+        </div>
+    </header>
+
+    <!-- SHOP NAVIGATION -->
+    <nav class="bg-amazon-light_blue border-b border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 py-2 flex flex-wrap gap-4 text-sm">
+            <button onclick="filterCategory('all')" class="hover:text-amazon-yellow">Alle Produkte</button>
+            <button onclick="filterCategory('Waffen')" class="hover:text-amazon-yellow">Waffen</button>
+            <button onclick="filterCategory('Ressourcen')" class="hover:text-amazon-yellow">Ressourcen</button>
+            <button onclick="filterCategory('Baustoffe')" class="hover:text-amazon-yellow">Baustoffe</button>
+            <button onclick="filterCategory('Tränke')" class="hover:text-amazon-yellow">Tränke</button>
+        </div>
+    </nav>
+
+    <!-- MAIN -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8">
+
+        <!-- SHOP PAGE -->
+        <section id="page-shop">
+            <div class="bg-gradient-to-r from-green-900 to-gray-900 rounded-lg p-8 mb-8 border border-green-700">
+                <h2 class="font-pixel text-4xl text-white mb-2">WILLKOMMEN BEI MPHL.CRAFT</h2>
+                <p class="text-gray-300">Dein Minecraft Marketplace für Items, Ressourcen und Ausrüstung.</p>
+            </div>
+
+            <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <p class="text-gray-400">Produkte werden geladen...</p>
+            </div>
+        </section>
+
+        <!-- CART PAGE -->
+        <section id="page-cart" class="hidden">
+            <h2 class="font-pixel text-3xl text-amazon-yellow mb-6">🛒 DEIN WARENKORB</h2>
+
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-6">
+                <div class="mb-6">
+                    <label class="block text-sm text-gray-300 mb-2">Dein Minecraft Name</label>
+                    <input type="text" id="customerMcName" placeholder="Minecraft Name..." class="w-full bg-gray-900 border border-gray-600 rounded p-3 text-white">
+                </div>
+
+                <div id="cartItemsContainer" class="divide-y divide-gray-700"></div>
+
+                <div class="border-t border-gray-700 mt-6 pt-4 flex justify-between items-center">
+                    <span class="font-bold">Gesamtpreis:</span>
+                    <span id="cartTotalPrice" class="text-2xl font-bold text-amazon-yellow">0 💎</span>
+                </div>
+
+                <button onclick="checkout()" class="w-full mt-6 bg-amazon-button hover:bg-amazon-button_hover text-black font-bold py-3 rounded">
+                    Bestellung abschicken
+                </button>
+
+                <button onclick="showPage('shop')" class="w-full mt-2 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded">
+                    Weiter einkaufen
+                </button>
+            </div>
+        </section>
+
+        <!-- OWNER DASHBOARD -->
+        <section id="page-owner" class="hidden space-y-8">
+            <div class="flex items-center justify-between">
+                <h2 class="font-pixel text-3xl text-amazon-yellow">⚙️ OWNER DASHBOARD</h2>
+                <button onclick="logoutOwner()" class="bg-red-700 hover:bg-red-600 px-4 py-2 rounded text-white text-sm">Abmelden</button>
+            </div>
+
+            <!-- STATISTICS -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-gray-800 border border-gray-700 p-5 rounded-lg">
+                    <p class="text-gray-400 text-xs">Bestellungen</p>
+                    <p id="statTotalOrders" class="text-3xl font-bold text-white">0</p>
+                </div>
+                <div class="bg-gray-800 border border-gray-700 p-5 rounded-lg">
+                    <p class="text-gray-400 text-xs">Umsatz</p>
+                    <p id="statTotalRevenue" class="text-3xl font-bold text-amazon-yellow">0 💎</p>
+                </div>
+                <div class="bg-gray-800 border border-gray-700 p-5 rounded-lg">
+                    <p class="text-gray-400 text-xs">Offene Bestellungen</p>
+                    <p id="statPendingOrders" class="text-3xl font-bold text-white">0</p>
+                </div>
+                <div class="bg-gray-800 border border-gray-700 p-5 rounded-lg">
+                    <p class="text-gray-400 text-xs">Produkte</p>
+                    <p id="statTotalProducts" class="text-3xl font-bold text-white">0</p>
+                </div>
+            </div>
+
+            <!-- ADD PRODUCT -->
+            <div class="bg-gray-800 rounded-lg p-5 border border-gray-700">
+                <h3 class="text-xl font-bold text-amazon-yellow font-pixel mb-4">➕ PRODUKT HINZUFÜGEN</h3>
+
+                <form id="addProductForm" onsubmit="handleProductSubmit(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <input type="text" id="prodName" placeholder="Produktname" required class="bg-gray-900 border border-gray-600 rounded p-2 text-white">
+                    <select id="prodCategory" class="bg-gray-900 border border-gray-600 rounded p-2 text-white">
+                        <option value="Waffen">Waffen</option>
+                        <option value="Ressourcen">Ressourcen</option>
+                        <option value="Baustoffe">Baustoffe</option>
+                        <option value="Tränke">Tränke</option>
+                    </select>
+                    <input type="number" id="prodPrice" placeholder="Preis" min="1" required class="bg-gray-900 border border-gray-600 rounded p-2 text-white">
+                    <input type="text" id="prodIcon" placeholder="Emoji" required class="bg-gray-900 border border-gray-600 rounded p-2 text-white">
+                    <button type="submit" class="md:col-span-4 bg-amazon-button hover:bg-amazon-button_hover text-black font-bold py-2 rounded">Produkt hinzufügen</button>
+                </form>
+            </div>
+
+            <!-- PRODUCT MANAGEMENT -->
+            <div class="bg-gray-800 rounded-lg p-5 border border-gray-700 space-y-4">
+                <h3 class="text-xl font-bold text-amazon-yellow font-pixel">📦 PRODUKTE VERWALTEN</h3>
+
+                <div class="bg-gray-900 rounded-lg overflow-hidden border border-gray-700">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-gray-300">
+                            <thead class="bg-gray-800 text-gray-400 text-xs uppercase border-b border-gray-700">
+                                <tr>
+                                    <th class="p-3">Icon</th>
+                                    <th class="p-3">Produkt</th>
+                                    <th class="p-3">Kategorie</th>
+                                    <th class="p-3">Preis</th>
+                                    <th class="p-3">Aktion</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ownerProductsTable" class="divide-y divide-gray-800"></tbody>
                         </table>
                     </div>
                 </div>
@@ -11,6 +237,7 @@
                     <span>📋 EINGEGANGENE BESTELLUNGEN</span>
                     <input type="text" id="orderSearchInput" oninput="filterOrdersTable()" placeholder="Kunde filtern..." class="px-3 py-1 bg-gray-900 border border-gray-700 rounded text-xs text-white focus:outline-none focus:border-amazon-yellow font-sans">
                 </h3>
+
                 <div class="bg-gray-900 rounded-lg overflow-hidden border border-gray-700">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm text-gray-300">
@@ -30,6 +257,7 @@
                 </div>
             </div>
         </section>
+
     </main>
 
     <!-- FOOTER -->
@@ -38,22 +266,15 @@
         <p class="mt-1">Nicht mit Mojang oder Microsoft verbunden.</p>
     </footer>
 
-    <!-- Hinweis -->
+    <!-- FIREBASE & JAVASCRIPT -->
     <script>
-      if (location.protocol === 'file:') {
-        window.addEventListener('DOMContentLoaded', () => {
-          const notice = document.createElement('div');
-          notice.className = 'fixed top-20 left-1/2 -translate-x-1/2 z-[100] max-w-xl bg-red-900 text-white p-3 rounded shadow-lg text-sm';
-          notice.textContent = 'Diese HTML-Datei bitte über HTTPS oder einen lokalen Server (z. B. VS Code Live Server) öffnen. Beim direkten Öffnen per Doppelklick blockiert der Browser die Firebase-Module; dadurch funktionieren die Buttons nicht.';
-          document.body.appendChild(notice);
-        });
-      }
-    </script>
+        let initializeApp, getFirestore, collection, addDoc, onSnapshot;
+        let doc, updateDoc, deleteDoc, getDocs;
 
-    <!-- FIREBASE & JS -->
-    <script>
-        let initializeApp, getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDocs;
-        let db = null, ordersRef = null, productsRef = null;
+        let db = null;
+        let ordersRef = null;
+        let productsRef = null;
+        let firebaseAvailable = false;
 
         const firebaseConfig = {
             apiKey: "AIzaSyDwBUR_Y7UDT6C8DDAIyKTFvDviHKlXy4U",
@@ -65,9 +286,7 @@
             measurementId: "G-8D706DJ0ZM"
         };
 
-        let firebaseAvailable = false;
-
-        // Passwortprüfung mit PBKDF2 (SHA-256), Salt und 310.000 Iterationen.
+        // PBKDF2 Passwort-Hash
         const PASSWORD_SALT = "4f08a4c46ad0911db8d5bf100ac15b0f";
         const TARGET_HASH = "20589dc31af7867020816b8dfa74759cacf82feb2259ed628b40f8906193898b";
 
@@ -77,6 +296,7 @@
             }
 
             const encoder = new TextEncoder();
+
             const keyMaterial = await crypto.subtle.importKey(
                 "raw",
                 encoder.encode(password),
@@ -201,10 +421,7 @@
             } catch (err) {
                 firebaseAvailable = false;
 
-                console.warn(
-                    "Firebase nicht verfügbar; lokaler Vorschau-Modus aktiv:",
-                    err
-                );
+                console.warn("Firebase nicht verfügbar:", err);
 
                 loadedProducts = defaultProducts.map((item, index) => ({
                     ...item,
@@ -247,11 +464,7 @@
 
             }, (error) => {
                 firebaseAvailable = false;
-
-                console.error(
-                    "Firestore Produkte konnten nicht geladen werden:",
-                    error
-                );
+                console.error("Firestore Fehler:", error);
 
                 loadedProducts = defaultProducts.map((item, index) => ({
                     ...item,
@@ -364,10 +577,7 @@
                 cart.push(product);
                 updateCartCount();
 
-                showToast(
-                    `"${product.name}" wurde zum Warenkorb hinzugefügt!`,
-                    "success"
-                );
+                showToast(`"${product.name}" wurde zum Warenkorb hinzugefügt!`, "success");
             }
         };
 
@@ -430,10 +640,7 @@
                 return;
             }
 
-            const total = cart.reduce(
-                (sum, item) => sum + Number(item.price),
-                0
-            );
+            const total = cart.reduce((sum, item) => sum + Number(item.price), 0);
 
             const orderData = {
                 customer: mcName,
@@ -691,7 +898,6 @@
             document.getElementById('statTotalProducts').innerText = loadedProducts.length;
         }
 
-        // Oberfläche sofort initialisieren, Firebase danach im Hintergrund verbinden.
         renderProducts(loadedProducts);
         connectFirebase();
     </script>
