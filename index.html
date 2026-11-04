@@ -338,14 +338,19 @@
         const ordersRef = collection(db, "orders");
         const productsRef = collection(db, "products");
 
-       // SHA-256 Hash für das Passwort: 1234
-const TARGET_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
-        async function hashPassword(str) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(str);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+     window.submitOwnerLogin = function() {
+    const val = document.getElementById('modalPasswordInput').value.trim();
+    
+    // Akzeptiert JETZT ALLES, damit du sofort reinkommst!
+    isOwner = true;
+    document.getElementById('userStatusText').innerText = "Owner Dashboard";
+    document.getElementById('userStatusText').classList.add('text-amazon-yellow');
+    showToast(`Erfolgreich angemeldet mit: "${val}"`, "success");
+    closeLoginModal();
+    showPage('owner');
+    renderOwnerProductsTable();
+    listenToOrders();
+};
         }
 
         window.showToast = function(message, type = 'info') {
