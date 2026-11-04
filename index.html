@@ -66,13 +66,12 @@
     <!-- Toast Container -->
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- OWNER LOGIN MODAL (Passwort wird als Punkte angezeigt) -->
+    <!-- OWNER LOGIN MODAL -->
     <div id="loginModal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-md w-full space-y-4 shadow-2xl">
             <h3 class="text-xl font-bold text-amazon-yellow font-pixel">🔐 OWNER ANMELDUNG</h3>
-            <p class="text-xs text-gray-400">Bitte gib das Owner-Passwort ein (wird aus Sicherheitsgründen verdeckt).</p>
+            <p class="text-xs text-gray-400">Bitte gib das Owner-Passwort ein.</p>
             <div>
-                <!-- type="password" sorgt dafür, dass man nur Punkte sieht! -->
                 <input type="password" id="modalPasswordInput" placeholder="Passwort eingeben..." class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-sm text-white focus:outline-none focus:border-amazon-yellow">
             </div>
             <div class="flex gap-2 justify-end">
@@ -339,12 +338,13 @@
         const ordersRef = collection(db, "orders");
         const productsRef = collection(db, "products");
 
-    // SHA-512 Hash für DasistnichtdasPASSWORT
-const TARGET_HASH = "625e171b1ea739666bb4f1edab1119bbfd2aef88e5dcececf04bcad9eef9067ea69a194511ef5b8f60dc1d054d5d95e0c8bdf9b21aae1bc5f564344d21ffcc34";
+        // SHA-512 Hash für AntiHuliPw!?
+        const TARGET_HASH = "625e171b1ea739666bb4f1edab1119bbfd2aef88e5dcececf04bcad9eef9067ea69a194511ef5b8f60dc1d054d5d95e0c8bdf9b21aae1bc5f564344d21ffcc34";
+
         async function hashPassword(str) {
             const encoder = new TextEncoder();
             const data = encoder.encode(str);
-          const hashBuffer = await crypto.subtle.digest('SHA-512', data);
+            const hashBuffer = await crypto.subtle.digest('SHA-512', data);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
@@ -405,6 +405,19 @@ const TARGET_HASH = "625e171b1ea739666bb4f1edab1119bbfd2aef88e5dcececf04bcad9eef
             }
         });
 
+        function listenToOrders() {
+            onSnapshot(ordersRef, (snapshot) => {
+                loadedOrders = [];
+                snapshot.forEach(docSnap => {
+                    loadedOrders.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                if (isOwner) {
+                    renderOwnerOrdersTable();
+                    updateAnalytics();
+                }
+            });
+        }
+
         window.renderProducts = function(itemsToRender = loadedProducts) {
             const grid = document.getElementById('productGrid');
             if (itemsToRender.length === 0) {
@@ -424,6 +437,27 @@ const TARGET_HASH = "625e171b1ea739666bb4f1edab1119bbfd2aef88e5dcececf04bcad9eef
                     </button>
                 </div>
             `).join('');
+        };
+
+        window.filterProducts = function() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = loadedProducts.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term));
+            renderProducts(filtered);
+        };
+
+        window.filterProductsMobile = function() {
+            const term = document.getElementById('mobileSearchInput').value.toLowerCase();
+            const filtered = loadedProducts.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term));
+            renderProducts(filtered);
+        };
+
+        window.filterCategory = function(cat) {
+            if (cat === 'all') {
+                renderProducts(loadedProducts);
+            } else {
+                const filtered = loadedProducts.filter(p => p.category === cat);
+                renderProducts(filtered);
+            }
         };
 
         window.showPage = function(page) {
@@ -522,7 +556,6 @@ const TARGET_HASH = "625e171b1ea739666bb4f1edab1119bbfd2aef88e5dcececf04bcad9eef
             }
         };
 
-        // Öffen des schönen Login-Modals statt des Browser-Prompts
         window.toggleOwnerLogin = function() {
             if(isOwner) {
                 showPage('owner');
@@ -591,111 +624,83 @@ const TARGET_HASH = "625e171b1ea739666bb4f1edab1119bbfd2aef88e5dcececf04bcad9eef
                     <td class="p-3 font-bold text-white">${p.name}</td>
                     <td class="p-3 text-xs text-amazon-yellow">${p.category}</td>
                     <td class="p-3 font-bold text-green-400">${p.price} 💎</td>
-                    <td class="p-3 flex gap-2">
-                        <button onclick="editProductPrice('${p.id}', '${p.name}', ${p.price})" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition">Preis Ändern</button>
-                        <button onclick="deleteProduct('${p.id}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition">Löschen</button>
+                    <td class="p-3">
+                        <button onclick="deleteProduct('${p.id}')" class="text-red-400 hover:text-red-300 bg-red-900/40 px-2.5 py-1 rounded text-xs transition">Löschen</button>
                     </td>
                 </tr>
             `).join('');
         }
 
-        window.editProductPrice = async function(id, name, currentPrice) {
-            const newPrice = prompt(`Neuer Preis für "${name}" (in Diamanten):`, currentPrice);
-            if (newPrice !== null && !isNaN(newPrice) && Number(newPrice) > 0) {
-                await updateDoc(doc(db, "products", id), { price: Number(newPrice) });
-                showToast("Preis aktualisiert!", "success");
-            }
-        };
-
         window.deleteProduct = async function(id) {
-            if (confirm("Möchtest du dieses Produkt wirklich löschen?")) {
-                await deleteDoc(doc(db, "products", id));
-                showToast("Produkt gelöscht.", "info");
+            if (confirm("Produkt wirklich löschen?")) {
+                try {
+                    await deleteDoc(doc(db, "products", id));
+                    showToast("Produkt gelöscht.", "info");
+                } catch (err) {
+                    showToast("Fehler beim Löschen.", "error");
+                }
             }
         };
 
-        function listenToOrders() {
-            onSnapshot(ordersRef, (snapshot) => {
-                loadedOrders = [];
-                snapshot.forEach((docSnap) => {
-                    loadedOrders.push({ id: docSnap.id, ...docSnap.data() });
-                });
-                renderOwnerOrdersTable(loadedOrders);
-                updateAnalytics();
-            });
-        }
-
-        function renderOwnerOrdersTable(ordersToRender) {
+        function renderOwnerOrdersTable(ordersToRender = loadedOrders) {
             const table = document.getElementById('ownerOrdersTable');
-            if (!ordersToRender || ordersToRender.length === 0) {
+            if (ordersToRender.length === 0) {
                 table.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">Keine Bestellungen vorhanden.</td></tr>`;
                 return;
             }
-
-            table.innerHTML = ordersToRender.map(data => `
+            table.innerHTML = ordersToRender.map(o => `
                 <tr class="hover:bg-gray-800">
-                    <td class="p-3 font-mono text-amazon-yellow">${data.customer || 'Anonym'}</td>
-                    <td class="p-3 text-xs">${data.items}</td>
-                    <td class="p-3 font-bold">${data.total} 💎</td>
-                    <td class="p-3 text-xs text-gray-400">${data.date}</td>
-                    <td class="p-3">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${data.status === 'Geliefert' ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}">
-                            ${data.status}
+                    <td class="p-3 font-mono font-bold text-white">${o.customer}</td>
+                    <td class="p-3 text-xs text-gray-300">${o.items}</td>
+                    <td class="p-3 font-bold text-amazon-yellow">${o.total} 💎</td>
+                    <td class="p-3 text-xs text-gray-400">${o.date}</td>
+                    <td class="p-3 text-xs">
+                        <span class="px-2 py-0.5 rounded font-bold ${o.status === 'Geliefert' ? 'bg-green-900/60 text-green-300' : 'bg-yellow-900/60 text-yellow-300'}">
+                            ${o.status}
                         </span>
                     </td>
                     <td class="p-3 flex gap-2">
-                        <button onclick="toggleOrderStatus('${data.id}', '${data.status}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-[10px] transition">Status Ändern</button>
-                        <button onclick="deleteOrder('${data.id}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-[10px] transition">Löschen</button>
+                        ${o.status !== 'Geliefert' ? `<button onclick="markOrderDelivered('${o.id}')" class="bg-green-700 hover:bg-green-600 text-white px-2 py-1 rounded text-xs font-bold transition">Liefern</button>` : ''}
+                        <button onclick="deleteOrder('${o.id}')" class="bg-red-900/40 hover:bg-red-800 text-red-300 px-2 py-1 rounded text-xs transition">Löschen</button>
                     </td>
                 </tr>
             `).join('');
         }
 
         window.filterOrdersTable = function() {
-            const query = document.getElementById('orderSearchInput').value.toLowerCase();
-            const filtered = loadedOrders.filter(o => (o.customer || '').toLowerCase().includes(query) || (o.items || '').toLowerCase().includes(query));
+            const term = document.getElementById('orderSearchInput').value.toLowerCase();
+            const filtered = loadedOrders.filter(o => o.customer.toLowerCase().includes(term));
             renderOwnerOrdersTable(filtered);
         };
 
-        function updateAnalytics() {
-            const totalOrders = loadedOrders.length;
-            const totalRevenue = loadedOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
-            const pendingOrders = loadedOrders.filter(o => o.status === 'Offen').length;
-            const totalProducts = loadedProducts.length;
-
-            document.getElementById('statTotalOrders').innerText = totalOrders;
-            document.getElementById('statTotalRevenue').innerText = `${totalRevenue} 💎`;
-            document.getElementById('statPendingOrders').innerText = pendingOrders;
-            document.getElementById('statTotalProducts').innerText = totalProducts;
-        }
-
-        window.toggleOrderStatus = async function(id, currentStatus) {
-            const newStatus = currentStatus === "Offen" ? "Geliefert" : "Offen";
-            await updateDoc(doc(db, "orders", id), { status: newStatus });
-            showToast(`Status auf "${newStatus}" geändert!`, "success");
-        };
-
-        window.deleteOrder = async function(id) {
-            if(confirm("Bestellung wirklich löschen?")) {
-                await deleteDoc(doc(db, "orders", id));
-                showToast("Bestellung gelöscht.", "info");
+        window.markOrderDelivered = async function(id) {
+            try {
+                await updateDoc(doc(db, "orders", id), { status: "Geliefert" });
+                showToast("Bestellung als geliefert markiert!", "success");
+            } catch (err) {
+                showToast("Fehler beim Aktualisieren.", "error");
             }
         };
 
-        window.filterCategory = function(cat) {
-            if(cat === 'all') renderProducts(loadedProducts);
-            else renderProducts(loadedProducts.filter(p => p.category === cat));
+        window.deleteOrder = async function(id) {
+            if (confirm("Bestellung löschen?")) {
+                try {
+                    await deleteDoc(doc(db, "orders", id));
+                    showToast("Bestellung gelöscht.", "info");
+                } catch (err) {
+                    showToast("Fehler beim Löschen.", "error");
+                }
+            }
         };
 
-        window.filterProducts = function() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            renderProducts(loadedProducts.filter(p => p.name.toLowerCase().includes(query)));
-        };
-
-        window.filterProductsMobile = function() {
-            const query = document.getElementById('mobileSearchInput').value.toLowerCase();
-            renderProducts(loadedProducts.filter(p => p.name.toLowerCase().includes(query)));
-        };
+        function updateAnalytics() {
+            document.getElementById('statTotalOrders').innerText = loadedOrders.length;
+            const revenue = loadedOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+            document.getElementById('statTotalRevenue').innerText = `${revenue} 💎`;
+            const pending = loadedOrders.filter(o => o.status !== 'Geliefert').length;
+            document.getElementById('statPendingOrders').innerText = pending;
+            document.getElementById('statTotalProducts').innerText = loadedProducts.length;
+        }
     </script>
 </body>
 </html>
