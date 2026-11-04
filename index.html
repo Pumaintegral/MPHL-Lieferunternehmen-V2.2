@@ -338,9 +338,8 @@
         const ordersRef = collection(db, "orders");
         const productsRef = collection(db, "products");
 
-        // Korrekter SHA-256 Hash für AntiHuliPw!?
-        const TARGET_HASH = "68c4e0ce05fbdb44b20e0e0fcd82ff773b063806ffad5eecdf86db3ff852ceee";
-
+       // SHA-256 Hash für das Passwort: 1234
+const TARGET_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
         async function hashPassword(str) {
             const encoder = new TextEncoder();
             const data = encoder.encode(str);
